@@ -6,55 +6,63 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import live.videosdk.rtc.android.Meeting
 import live.videosdk.rtc.android.Participant
 import live.videosdk.rtc.android.VideoSDK
 import live.videosdk.rtc.android.listeners.MeetingEventListener
 
 class MeetingActivity : AppCompatActivity() {
-    // declare the variables we will be using to handle the meeting
+    // Declare variables to handle the meeting
     private var meeting: Meeting? = null
     private var micEnabled = true
     private var webcamEnabled = true
+
+    // Initialize DatabaseActivity instance
+    private val dbActivity: DatabaseActivity = DatabaseActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_meeting)
 
+        // Retrieve token and meetingId from the intent
         val token = intent.getStringExtra("token")
         val meetingId = intent.getStringExtra("meetingId")
-        val participantName = "John Doe"
+        val participantName = "John Doe" // TODO: Get from user
 
-        // 1. Configuration VideoSDK with Token
+        // Configure VideoSDK with the token
         VideoSDK.config(token)
 
-        // 2. Initialize VideoSDK Meeting
+        // Initialize VideoSDK Meeting
         meeting = VideoSDK.initMeeting(
-            this@MeetingActivity, meetingId, participantName,
-            micEnabled, webcamEnabled, null, null, false, null, null)
+            this, meetingId, participantName,
+            micEnabled, webcamEnabled, null, null, false, null, null
+        )
 
-        // 3. Add event listener for listening upcoming events
+        // Add event listener for upcoming events
         meeting!!.addEventListener(meetingEventListener)
 
-        //4. Join VideoSDK Meeting
+        // Join the VideoSDK Meeting
         meeting!!.join()
 
-        (findViewById<View>(R.id.tvMeetingId) as TextView).text = meetingId
+        // Set the meetingId text
+        findViewById<TextView>(R.id.tvMeetingId).text = meetingId
 
-        val rvParticipants: RecyclerView? = findViewById<RecyclerView>(R.id.rvParticipants)
-        if (rvParticipants != null) {
-            rvParticipants.layoutManager = GridLayoutManager(this, 2)
-            rvParticipants.adapter = ParticipantAdapter(meeting!!)
+        // Initialize RecyclerView for participants
+        findViewById<RecyclerView>(R.id.rvParticipants)?.apply {
+            layoutManager = GridLayoutManager(this@MeetingActivity, 2)
+            adapter = ParticipantAdapter(meeting!!)
         }
 
-
-        // actions
+        // Set action listeners for UI interactions
         setActionListeners()
     }
 
-    // creating the MeetingEventListener
+    // Creating the MeetingEventListener
     private val meetingEventListener: MeetingEventListener = object : MeetingEventListener() {
         override fun onMeetingJoined() {
             Log.d("#meeting", "onMeetingJoined()")
@@ -67,56 +75,68 @@ class MeetingActivity : AppCompatActivity() {
         }
 
         override fun onParticipantJoined(participant: Participant) {
+            // Set joined meeting as not available in the database
+            lifecycleScope.launch(Dispatchers.IO) {
+                meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, false) }
+            }
             Toast.makeText(
-                this@MeetingActivity, participant.displayName + " joined",
+                this@MeetingActivity, "${participant.displayName} joined",
                 Toast.LENGTH_SHORT
             ).show()
         }
 
         override fun onParticipantLeft(participant: Participant) {
+            // Set joined meeting as available in the database
+            lifecycleScope.launch(Dispatchers.IO) {
+                meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, true) }
+            }
             Toast.makeText(
-                this@MeetingActivity, participant.displayName + " left",
+                this@MeetingActivity, "${participant.displayName} left",
                 Toast.LENGTH_SHORT
             ).show()
         }
     }
 
+    // Set action listeners for mic, webcam, and leave buttons
     private fun setActionListeners() {
-        // toggle mic
-        findViewById<View>(R.id.btnMic).setOnClickListener { view: View? ->
+        // Toggle mic
+        findViewById<View>(R.id.btnMic).setOnClickListener {
             if (micEnabled) {
-                // this will mute the local participant's mic
                 meeting!!.muteMic()
-                Toast.makeText(this@MeetingActivity, "Mic Muted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Mic Muted", Toast.LENGTH_SHORT).show()
             } else {
-                // this will unmute the local participant's mic
                 meeting!!.unmuteMic()
-                Toast.makeText(this@MeetingActivity, "Mic Enabled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Mic Enabled", Toast.LENGTH_SHORT).show()
             }
-            micEnabled=!micEnabled
+            micEnabled = !micEnabled
         }
 
-        // toggle webcam
-        findViewById<View>(R.id.btnWebcam).setOnClickListener { view: View? ->
+        // Toggle webcam
+        findViewById<View>(R.id.btnWebcam).setOnClickListener {
             if (webcamEnabled) {
-                // this will disable the local participant webcam
                 meeting!!.disableWebcam()
-                Toast.makeText(this@MeetingActivity, "Webcam Disabled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Webcam Disabled", Toast.LENGTH_SHORT).show()
             } else {
-                // this will enable the local participant webcam
                 meeting!!.enableWebcam()
-                Toast.makeText(this@MeetingActivity, "Webcam Enabled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Webcam Enabled", Toast.LENGTH_SHORT).show()
             }
-            webcamEnabled=!webcamEnabled
+            webcamEnabled = !webcamEnabled
         }
 
-        // leave meeting
-        findViewById<View>(R.id.btnLeave).setOnClickListener { view: View? ->
-            // this will make the local participant leave the meeting
+        // Leave meeting
+        findViewById<View>(R.id.btnLeave).setOnClickListener {
+            // Update meeting status if the user is the last participant
+            if ((meeting?.participants?.size ?: 0) <= 1) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, true) }
+                }
+            }else if((meeting?.participants?.size ?: 0) == 0){
+                lifecycleScope.launch(Dispatchers.IO) {
+                    meeting?.meetingId?.let { dbActivity.deleteMeetingFromDatabase(it) }
+                    meeting?.end()
+                }
+            }
             meeting!!.leave()
         }
     }
-
-
-
 }
