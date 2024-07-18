@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">VideoCallingApp</string>
+    <string name="create_meeting">Create Meeting</string>
+    <string name="or">OR</string>
+    <string name="enter_meeting_id">Enter Meeting ID</string>
+    <string name="join_meeting">Join Meeting</string>
+    <string name="meeting_id_text">Meeting Id</string>
+    <string name="mic">Mic</string>
+    <string name="leave">Leave</string>
+    <string name="webcam">Webcam</string>
 </resources>

@@ -7,6 +7,14 @@ android {
     namespace = "com.app.videocallingapp"
     compileSdk = 34
 
+    sourceSets {
+        sourceSets {
+            getByName("main") {
+                jniLibs.srcDirs("libs")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.app.videocallingapp"
         minSdk = 24
@@ -19,7 +27,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -36,13 +44,8 @@ android {
 }
 
 dependencies {
-
     implementation(libs.rtc.android.sdk)
-
-    // library to perform Network call to generate a meeting id
     implementation(libs.android.networking)
-
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

@@ -12,20 +12,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="Create Meeting" />
+        android:text="@string/create_meeting" />
 
     <TextView
         style="@style/TextAppearance.AppCompat.Headline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="OR" />
+        android:text="@string/or" />
 
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginVertical="16dp"
-        android:hint="Enter Meeting ID">
+        android:hint="@string/enter_meeting_id">
 
         <EditText
             android:id="@+id/etMeetingId"
@@ -37,5 +37,5 @@
         android:id="@+id/btnJoinMeeting"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Join Meeting" />
+        android:text="@string/join_meeting" />
 </LinearLayout>
