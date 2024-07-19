@@ -38,6 +38,18 @@ class DatabaseActivity {
         }
     }
 
+    suspend fun updateParticipantCount(meetingId: String, participantCount: Int): Boolean {
+        return try {db.collection("Meetings")
+            .document(meetingId)
+            .update("participantCount", participantCount)
+            .await()
+            true
+        }catch (e:Exception){
+            Log.e("DatabaseActivity", "Error updating participant count", e)
+            false
+        }
+    }
+
     // Deletes a meeting from the database and returns true if successful, false otherwise
     suspend fun deleteMeetingFromDatabase(meetingId: String): Boolean {
         return try {

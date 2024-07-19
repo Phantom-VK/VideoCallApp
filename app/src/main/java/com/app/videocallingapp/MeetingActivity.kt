@@ -22,8 +22,7 @@ class MeetingActivity : AppCompatActivity() {
     private var micEnabled = true
     private var webcamEnabled = true
 
-    // Initialize DatabaseActivity instance
-    private val dbActivity: DatabaseActivity = DatabaseActivity()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +64,7 @@ class MeetingActivity : AppCompatActivity() {
     // Creating the MeetingEventListener
     private val meetingEventListener: MeetingEventListener = object : MeetingEventListener() {
         override fun onMeetingJoined() {
+
             Log.d("#meeting", "onMeetingJoined()")
         }
 
@@ -75,10 +75,8 @@ class MeetingActivity : AppCompatActivity() {
         }
 
         override fun onParticipantJoined(participant: Participant) {
-            // Set joined meeting as not available in the database
-            lifecycleScope.launch(Dispatchers.IO) {
-                meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, false) }
-            }
+
+
             Toast.makeText(
                 this@MeetingActivity, "${participant.displayName} joined",
                 Toast.LENGTH_SHORT
@@ -86,10 +84,7 @@ class MeetingActivity : AppCompatActivity() {
         }
 
         override fun onParticipantLeft(participant: Participant) {
-            // Set joined meeting as available in the database
-            lifecycleScope.launch(Dispatchers.IO) {
-                meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, true) }
-            }
+
             Toast.makeText(
                 this@MeetingActivity, "${participant.displayName} left",
                 Toast.LENGTH_SHORT
@@ -125,17 +120,8 @@ class MeetingActivity : AppCompatActivity() {
 
         // Leave meeting
         findViewById<View>(R.id.btnLeave).setOnClickListener {
-            // Update meeting status if the user is the last participant
-            if ((meeting?.participants?.size ?: 0) <= 1) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    meeting?.meetingId?.let { dbActivity.updateMeetingStatus(it, true) }
-                }
-            }else if((meeting?.participants?.size ?: 0) == 0){
-                lifecycleScope.launch(Dispatchers.IO) {
-                    meeting?.meetingId?.let { dbActivity.deleteMeetingFromDatabase(it) }
-                    meeting?.end()
-                }
-            }
+
+
             meeting!!.leave()
         }
     }

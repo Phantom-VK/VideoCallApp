@@ -21,8 +21,7 @@ import org.json.JSONObject
 
 class JoinActivity : AppCompatActivity() {
 
-    private var sampleToken = "YOUR TOKEN HERE"
-    private val dbActivity:DatabaseActivity = DatabaseActivity()
+    private var sampleToken = "YOUR SAMPLE TOKEN"
 
 
 
@@ -37,32 +36,21 @@ class JoinActivity : AppCompatActivity() {
         checkSelfPermission(REQUESTED_PERMISSIONS[0], PERMISSION_REQ_ID)
         checkSelfPermission(REQUESTED_PERMISSIONS[1], PERMISSION_REQ_ID)
 
-//        btnCreate.setOnClickListener {
-//            createMeeting(sampleToken)
-//        }
+        btnCreate.setOnClickListener {
+            createMeeting(sampleToken)
+        }
 
         //will check if any empty meet is available and join else create new one
         btnJoin.setOnClickListener {
-            lifecycleScope.launch {
-                val randomMeetingId = dbActivity.getRandomMeetingId()
-                Log.d("JoinActivity", "Meeting ID: $randomMeetingId")
-                if (randomMeetingId != null) {
-                    joinRandomCall(randomMeetingId.toString())
-                }else{
-                    createMeeting(sampleToken)
-                }
-            }
+            val intent = Intent(this@JoinActivity, MeetingActivity::class.java)
+            intent.putExtra("token", sampleToken)
+            intent.putExtra("meetingId", etMeetingId.text.toString())
+            startActivity(intent)
 
         }
     }
 
-    //Function to join random call
-     fun joinRandomCall(meetingId:String){
-        val intent = Intent(this@JoinActivity, MeetingActivity::class.java)
-        intent.putExtra("token", sampleToken)
-        intent.putExtra("meetingId", meetingId)
-        startActivity(intent)
-    }
+
 
     private fun createMeeting(token: String) {
         // we will make an API call to VideoSDK Server to get a roomId
@@ -75,11 +63,6 @@ class JoinActivity : AppCompatActivity() {
                         // response will contain `roomId`
                         val meetingId = response.getString("roomId")
 
-                        lifecycleScope.launch {
-                            dbActivity.addMeetingToDatabase(
-                                Meeting(meetingId)
-                            )
-                        }
 
                         // starting the MeetingActivity with received roomId and our sampleToken
                         val intent = Intent(this@JoinActivity, MeetingActivity::class.java)
